@@ -19,7 +19,7 @@ steps:
     - task: AzureFileCopy@4
       displayName: 'Deploy files to azure storage'
       inputs:
-          SourcePath: 'apps/client/build/*'
+          SourcePath: 'build/*'
           azureSubscription: 'Markdown Service Connection'
           Destination: 'AzureBlob'
           storage: 'mdeditor'
