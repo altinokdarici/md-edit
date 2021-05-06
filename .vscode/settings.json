@@ -1,0 +1,13 @@
+{
+	"files.exclude": {
+		"**/node_modules": true,
+		"**/dist": true,
+		"**/lib": true,
+		"**/.eslintcache": true,
+		"**/yarn-error.log": true,
+		"**/build": true
+	},
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": true
+	}
+}

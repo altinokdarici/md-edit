@@ -1,0 +1,26 @@
+trigger:
+    batch: true
+    branches:
+        include:
+            - main
+
+pool:
+    vmImage: windows-latest
+
+steps:
+    - script: yarn
+      displayName: 'Instal dependencies'
+
+    - script: |
+          cd apps/client
+          yarn build --production
+      displayName: 'Build'
+
+    - task: AzureFileCopy@4
+      displayName: 'Deploy files to azure storage'
+      inputs:
+          SourcePath: 'apps/client/build/*'
+          azureSubscription: 'Markdown Service Connection'
+          Destination: 'AzureBlob'
+          storage: 'mdeditor'
+          ContainerName: '$web'

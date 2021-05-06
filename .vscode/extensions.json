@@ -1,0 +1,10 @@
+{
+	"recommendations": [
+		"naumovs.color-highlight",
+		"streetsidesoftware.code-spell-checker",
+		"dbaeumer.vscode-eslint",
+		"esbenp.prettier-vscode",
+		"eamodio.gitlens",
+		"ms-azuretools.vscode-bicep"
+	]
+}
