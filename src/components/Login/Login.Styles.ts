@@ -14,6 +14,11 @@ export const useLoginClassNames = makeStyles((theme) => ({
 	title: {
 		color: 'grey',
 	},
+	loginButtonContainer: {
+		width: 213,
+		display: 'flex',
+		flexDirection: 'column',
+	},
 }));
 
 export const useMicrosoftLoginButtonStyles = (): IButtonStyles => ({
@@ -24,6 +29,7 @@ export const useMicrosoftLoginButtonStyles = (): IButtonStyles => ({
 		font: 'Segoe UI Regular',
 		fontSize: '15px',
 		fontWeight: 600,
+		marginBottom: 10,
 	},
 	icon: {
 		marginRight: 12,
