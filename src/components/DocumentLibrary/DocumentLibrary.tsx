@@ -15,9 +15,11 @@ import { AppDocument, Dictionary, DocumentStatus, Section } from '../../models';
 
 export const DocumentLibrary = () => {
 	const [documentLibrary, setDocumentLibrary] = useRecoilState(documentLibraryState);
-	const navLinkGroups = useRecoilValue(navLinkGroupsSelector);
+	const [searchKey, setSearchKey] = React.useState<string>();
+	const navLinkGroups = useRecoilValue(navLinkGroupsSelector(searchKey));
 	const [{ isDocumentLibraryVisible }] = useRecoilState(uxState);
 	const [isAddDocumentDialogVisible, showAddDocumentDialog, hideAddDocumentDialog] = useBoolean(false);
+	const [isLoadingDocumentLibrary, setIsLoadingDocumentLibrary] = React.useState<boolean>(false);
 	const classNames = useDocumentLibraryClassNames();
 
 	setEditingActions({
@@ -53,11 +55,11 @@ export const DocumentLibrary = () => {
 				for (const file of files) {
 					documentsById[file.id] = {
 						sectionId: directory.id,
-						name: file.name,
+						name: file.name.replace('.md', ''),
 					};
 				}
 			}
-
+			setIsLoadingDocumentLibrary(false);
 			setDocumentLibrary({
 				...documentLibrary,
 				sectionsById: {
@@ -71,6 +73,7 @@ export const DocumentLibrary = () => {
 			});
 		};
 
+		setIsLoadingDocumentLibrary(true);
 		fetchAsync();
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,17 +92,15 @@ export const DocumentLibrary = () => {
 
 	const onSearchBoxChange = React.useCallback(
 		(_?: React.ChangeEvent<HTMLInputElement>, newValue?: string) => {
-			setDocumentLibrary({
-				...documentLibrary,
-				searchKey: newValue,
-			});
+			setSearchKey(newValue);
 		},
-		[setDocumentLibrary, documentLibrary],
+		[setSearchKey],
 	);
 
 	const onLinkClick = React.useCallback(
 		(_?: React.MouseEvent<HTMLElement, MouseEvent>, item?: INavLink) => {
-			if (item?.key) {
+			console.log({ item });
+			if (!item?.links && item?.key) {
 				setDocumentLibrary({
 					...documentLibrary,
 					selectedDocumentId: item.key,
@@ -125,7 +126,7 @@ export const DocumentLibrary = () => {
 	};
 
 	const isSpinnerVisible =
-		documentLibrary.isLoadingDocumentLibrary && (navLinkGroups.length === 0 || navLinkGroups[0].links.length === 0);
+		isLoadingDocumentLibrary && (navLinkGroups.length === 0 || navLinkGroups[0].links.length === 0);
 
 	return (
 		<>

@@ -1,5 +1,5 @@
 import { INavLink, INavLinkGroup } from '@fluentui/react';
-import { atom, selector } from 'recoil';
+import { atom, selector, selectorFamily } from 'recoil';
 
 import { AppDocument, Dictionary, DocumentStatus, Section, WithId } from '../models';
 
@@ -13,14 +13,11 @@ export interface DocumentLibraryState {
 	documentStatusesById: {
 		[documentId: string]: DocumentStatus;
 	};
-	searchKey?: string;
 	selectedDocumentId?: string;
-	isLoadingDocumentLibrary: boolean;
 	content?: string;
 }
 
 const defaultState: DocumentLibraryState = {
-	isLoadingDocumentLibrary: false,
 	sectionsById: {},
 	documentsById: {},
 	documentStatusesById: {},
@@ -46,10 +43,11 @@ const search = (section: Section, documents: Dictionary<AppDocument>, searchKey?
 		.map((x) => convertToAppDocumentWithId(x, documents[x]));
 };
 
-export const navLinkGroupsSelector = selector({
+export const navLinkGroupsSelector = selectorFamily({
 	key: 'navLinkGroupsSelector',
-	get: ({ get }) => {
-		const { sectionsById, documentsById, searchKey } = get(documentLibraryState);
+	dangerouslyAllowMutability: true,
+	get: (searchKey: string | undefined) => ({ get }) => {
+		const { sectionsById, documentsById } = get(documentLibraryState);
 
 		return <INavLinkGroup[]>[
 			{
