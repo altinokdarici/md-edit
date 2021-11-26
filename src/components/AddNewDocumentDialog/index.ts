@@ -12,8 +12,8 @@ export const mapStateToProps = ({ documentLibrary }: AppState): AddNewDocumentDi
 });
 
 export const mapDispatchToProps: AddNewDocumentDialogDispatchProps = {
-	onSave: (sectionName: string, documentName: string) =>
-		actions.documentLibrary.createDocument({ sectionName, documentName }),
+	onSave: (sectionId: string, documentName: string) =>
+		actions.documentLibrary.createDocument({ sectionId, documentName }),
 };
 
 export const AddNewDocumentDialog = connect(mapStateToProps, mapDispatchToProps)(AddNewDocumentDialogInternal);

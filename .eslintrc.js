@@ -17,6 +17,7 @@ module.exports = {
 		sourceType: 'module',
 	},
 	rules: {
+		'class-methods-use-this':'off',
 		'react/jsx-props-no-spreading': 'off',
 		'global-require': 'off',
 		'@typescript-eslint/explicit-function-return-type': 'off',

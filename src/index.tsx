@@ -1,16 +1,24 @@
+// polyfill
+import 'reflect-metadata';
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { initializeIcons } from '@fluentui/react';
+import { container } from 'tsyringe';
 import './index.css';
 
 import { App } from './components/App';
 import reportWebVitals from './reportWebVitals';
 import { initStore, actions } from './store';
-import { setEditingContext } from './services';
+import { OneDriveFileSystemService, setEditingContext } from './services';
 import { DocumentStatus } from './models';
 
 initializeIcons();
+
+container.register('IFileSystemService', {
+	useClass: OneDriveFileSystemService,
+});
 
 const store = initStore();
 

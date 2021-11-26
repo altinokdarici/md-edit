@@ -19,7 +19,7 @@ export interface AddNewDocumentDialogStateProps {
 }
 
 export interface AddNewDocumentDialogDispatchProps {
-	onSave: (sectionName: string, documentName: string) => void;
+	onSave: (sectionId: string, documentName: string) => void;
 }
 export interface AddNewDocumentDialogOwnProps {
 	onHide: () => void;
@@ -33,9 +33,9 @@ export const AddNewDocumentDialog = ({ sectionsById, onSave, onHide }: AddNewDoc
 	const [section, setSection] = React.useState<string | undefined>(undefined);
 	const [documentName, setDocumentName] = React.useState<string | undefined>(undefined);
 
-	const [options, setOptions] = React.useState<IComboBoxOption[]>(
+	const [options] = React.useState<IComboBoxOption[]>(
 		Object.keys(sectionsById).map((sectionId) => ({
-			key: sectionsById[sectionId].name,
+			key: sectionId,
 			text: sectionsById[sectionId].name,
 		})),
 	);
@@ -48,15 +48,10 @@ export const AddNewDocumentDialog = ({ sectionsById, onSave, onHide }: AddNewDoc
 	}, [section, documentName, onSave, onHide]);
 
 	const onComboBoxChange = React.useCallback(
-		(_event: React.FormEvent<IComboBox>, option?: IComboBoxOption, _index?: number, value?: string) => {
-			if (value) {
-				setOptions([...options, { key: value, text: value }]);
-				setSection(value);
-			} else if (option) {
-				setSection(option.key as string);
-			}
+		(_event: React.FormEvent<IComboBox>, option?: IComboBoxOption, _index?: number, _value?: string) => {
+			setSection(option!.key as string);
 		},
-		[setOptions, setSection, options],
+		[setSection],
 	);
 
 	const onTextFieldChange = React.useCallback(
