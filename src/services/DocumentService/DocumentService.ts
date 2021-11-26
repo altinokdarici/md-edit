@@ -1,20 +1,14 @@
+import { container } from 'tsyringe';
+
 import { AppDocument, Section, WithId } from '../../models';
-import {
-	getDriveFilesInFolder,
-	getDriveRootFolders,
-	File,
-	Folder,
-	deleteDriveItem,
-	downloadDriveFileContent,
-	renameDriveItem,
-	createDriveFolder,
-	createDriveFile,
-} from '../OneDriveService';
+import { IDirectory, IFile, IFileSystemService, isDirectory } from '../FileSystemService';
+
+const getFileSystemService = () => container.resolve<IFileSystemService>('IFileSystemService');
 
 export const getSections = async (): Promise<WithId<Section>[]> => {
-	const folders = await getDriveRootFolders();
+	const folders = await getFileSystemService().getDirectories();
 
-	const convertFolderToSection = (folder: Folder): WithId<Section> => {
+	const convertFolderToSection = (folder: IDirectory | IFile): WithId<Section> => {
 		const section: WithId<Section> = {
 			documentIds: [],
 			name: folder.name,
@@ -24,13 +18,12 @@ export const getSections = async (): Promise<WithId<Section>[]> => {
 		return section;
 	};
 
-	return folders.value.map(convertFolderToSection);
+	return folders.filter(isDirectory).map(convertFolderToSection);
 };
 
-const convertFileToDocument = (sectionId: string) => (file: File): WithId<AppDocument> => {
+const convertFileToDocument = (sectionId: string) => (file: IFile): WithId<AppDocument> => {
 	return {
 		id: file.id,
-		downloadUrl: file['@microsoft.graph.downloadUrl'],
 		fileName: file.name,
 		name: file.name.replace('.md', ''),
 		sectionId,
@@ -38,21 +31,25 @@ const convertFileToDocument = (sectionId: string) => (file: File): WithId<AppDoc
 };
 
 export const getDocumentsInSection = async (section: WithId<Section>): Promise<WithId<AppDocument>[]> => {
-	const files = await getDriveFilesInFolder(section.name);
-	console.log({ files });
-	return files.value.filter((x) => x.name.indexOf('.md') > 0).map(convertFileToDocument(section.id));
+	const files = await getFileSystemService().getFiles(section.id);
+
+	return files.filter((x) => x.name.indexOf('.md') > 0).map(convertFileToDocument(section.id));
 };
 
 export const deleteDocumentLibraryItem = (itemId: string) => {
-	return deleteDriveItem(itemId);
+	return getFileSystemService().deleteFile(itemId);
 };
 
-export const downloadDocumentContent = downloadDriveFileContent;
+export const downloadDocumentContent = (fileId: string) => {
+	return getFileSystemService().getFileContent(fileId);
+};
 
-export const renameDocumentLibraryItem = renameDriveItem;
+export const renameDocumentLibraryItem = (fileId: string, newName: string) => {
+	return getFileSystemService().renameFile(fileId, newName);
+};
 
 export const createDocumentLibrarySection = async (name: string): Promise<WithId<Section>> => {
-	const folder = await createDriveFolder(name);
+	const folder = await getFileSystemService().createDirectory(name);
 	const section: WithId<Section> = {
 		documentIds: [],
 		id: folder.id,
@@ -62,14 +59,13 @@ export const createDocumentLibrarySection = async (name: string): Promise<WithId
 };
 
 export const createDocumentInLibrary = async (
-	sectionName: string,
+	sectionId: string,
 	fileName: string,
 	content: string,
 ): Promise<WithId<Omit<AppDocument, 'sectionId'>>> => {
-	const file = await createDriveFile(sectionName, fileName, content);
+	const file = await getFileSystemService().setFileContent(sectionId, fileName, content);
 
 	return {
-		downloadUrl: file['@microsoft.graph.downloadUrl'],
 		fileName: file.name,
 		id: file.id,
 		name: file.name.replace('.md', ''),

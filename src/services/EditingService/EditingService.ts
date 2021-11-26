@@ -1,13 +1,16 @@
 import { Async } from '@fluentui/react';
 // eslint-disable-next-line import/no-unresolved
 import { editor } from 'monaco-editor';
+import { container } from 'tsyringe';
 
 import { DocumentStatus } from '../../models';
 import { downloadDocumentContent } from '../DocumentService';
-import { updateDriveFile } from '../OneDriveService';
+import { IFileSystemService } from '../FileSystemService';
 import { EditingContextActions } from './EditingContext';
 import { getEditorInstance } from './editorInstance';
 import { getDocumentUri } from './getDocumentUri';
+
+const getFileSystemService = () => container.resolve<IFileSystemService>('IFileSystemService');
 
 export type OnChangeCallback = (content: string) => void;
 
@@ -21,7 +24,9 @@ export class EditingService {
 	private saveChanges = this.async.debounce(
 		async () => {
 			this.actions.updateDocumentStatus(this.documentId, DocumentStatus.Saving);
-			await updateDriveFile(this.documentId, this.model.getValue());
+
+			getFileSystemService().setFileContentByFileId(this.documentId, this.model.getValue());
+
 			this.actions.updateDocumentStatus(this.documentId, DocumentStatus.Saved);
 		},
 		400,

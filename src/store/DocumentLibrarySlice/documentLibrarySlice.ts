@@ -66,7 +66,6 @@ export const documentLibrarySlice = createSlice({
 			payload.forEach((document) => {
 				state.documentsById[document.id] = {
 					name: document.name,
-					downloadUrl: document.downloadUrl,
 					sectionId: document.sectionId,
 					fileName: document.fileName,
 				};
