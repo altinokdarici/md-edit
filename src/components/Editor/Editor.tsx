@@ -3,12 +3,15 @@ import * as React from 'react';
 import { editor } from 'monaco-editor';
 import { Resizable } from 're-resizable';
 import { useTheme } from '@fluentui/react';
+import { useRecoilState } from 'recoil';
 
 import { useEditorClassNames } from './Editor.Styles';
 import { setEditorInstance } from '../../services/EditingService';
-import { EditorProps } from './Editor.Props';
+import { uxState } from '../../state';
 
-export const Editor = ({ isDarkModeEnabled }: EditorProps) => {
+export const Editor = () => {
+	const [{ isDarkModeEnabled }] = useRecoilState(uxState);
+
 	const theme = useTheme();
 	const classNames = useEditorClassNames();
 	const ref = React.useRef<HTMLDivElement | null>(null);

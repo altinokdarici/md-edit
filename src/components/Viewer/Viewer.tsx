@@ -1,17 +1,21 @@
 import * as React from 'react';
 import { Parser, HtmlRenderer } from 'commonmark';
+import { useRecoilState } from 'recoil';
 
-import { ViewerProps } from './Viewer.Props';
 import { useViewerClassNames } from './Viewer.Styles';
 import { getEditingService } from '../../services';
+import { documentLibraryState, uxState } from '../../state';
 
-export const Viewer = ({ isViewerVisible, documentId }: ViewerProps) => {
+export const Viewer = () => {
+	const [{ selectedDocumentId }] = useRecoilState(documentLibraryState);
+	const [{ isViewerVisible }] = useRecoilState(uxState);
+
 	const [content, setContent] = React.useState<string>('');
 	const ref = React.useRef<HTMLDivElement | null>(null);
 
 	React.useEffect(() => {
-		if (ref.current && documentId) {
-			const editingService = getEditingService(documentId);
+		if (ref.current && selectedDocumentId) {
+			const editingService = getEditingService(selectedDocumentId);
 
 			editingService.addOnChangeCallback((content) => {
 				setContent(content);
@@ -23,7 +27,7 @@ export const Viewer = ({ isViewerVisible, documentId }: ViewerProps) => {
 
 			ref.current.innerHTML = writer.render(parsed);
 		}
-	}, [documentId, isViewerVisible, setContent, content]);
+	}, [selectedDocumentId, isViewerVisible, setContent, content]);
 
 	const classNames = useViewerClassNames();
 

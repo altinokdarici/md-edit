@@ -1,6 +1,8 @@
 import { FontIcon, FontSizes } from '@fluentui/react';
 import React from 'react';
+import { useRecoilState } from 'recoil';
 
+import { documentLibraryState } from '../../state';
 import { Editor } from '../Editor';
 import { Toolbar } from '../Toolbar';
 import { Viewer } from '../Viewer';
@@ -26,7 +28,11 @@ export interface WorkbenchProps {
 	showNoDocument: boolean;
 }
 
-export const Workbench = ({ showNoDocument }: WorkbenchProps) => {
+export const Workbench = () => {
+	const [{ selectedDocumentId }] = useRecoilState(documentLibraryState);
+
+	const showNoDocument = !selectedDocumentId;
+
 	const classNames = useWorkbenchClassNames(showNoDocument)();
 
 	return (
