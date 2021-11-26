@@ -23,11 +23,11 @@ export class EditingService {
 
 	private saveChanges = this.async.debounce(
 		async () => {
-			this.actions.updateDocumentStatus(this.documentId, DocumentStatus.Saving);
+			this.actions.updateDocumentStatus?.(this.documentId, DocumentStatus.Saving);
 
-			getFileSystemService().setFileContentByFileId(this.documentId, this.model.getValue());
+			await getFileSystemService().setFileContentByFileId(this.documentId, this.model.getValue());
 
-			this.actions.updateDocumentStatus(this.documentId, DocumentStatus.Saved);
+			this.actions.updateDocumentStatus?.(this.documentId, DocumentStatus.Saved);
 		},
 		400,
 		{
@@ -36,12 +36,12 @@ export class EditingService {
 	);
 
 	constructor(private documentId: string, private actions: EditingContextActions) {
-		actions.updateDocumentStatus(documentId, DocumentStatus.Downloading);
+		this.actions.updateDocumentStatus?.(documentId, DocumentStatus.Downloading);
 
 		downloadDocumentContent(documentId).then((content) => {
 			this.model.setValue(content);
 			this.onChangeCallbacks.forEach((callback) => callback(content));
-			this.actions.updateDocumentStatus(this.documentId, DocumentStatus.Opened);
+			this.actions.updateDocumentStatus?.(this.documentId, DocumentStatus.Opened);
 
 			this.model.onDidChangeContent(() => {
 				this.saveChanges();

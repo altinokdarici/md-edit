@@ -1,24 +1,80 @@
 import React from 'react';
 import { Resizable } from 're-resizable';
 import { Nav, CommandBar, SearchBox, ICommandBarItemProps, INavLink, Spinner } from '@fluentui/react';
+import { useRecoilState, useRecoilValue } from 'recoil';
 
-import { DocumentLibraryProps } from './DocumentLibrary.Props';
 import { commandBarStyles, useDocumentLibraryClassNames, navStyles, searchBoxStyles } from './DocumentLibrary.Styles';
 import { localization } from '../../localization';
 import { NavigationMenuLink } from '../NavigationMenuLink';
 import { AddNewDocumentDialog } from '../AddNewDocumentDialog';
 import { useBoolean } from '../../hooks';
-import { getEditingService } from '../../services/EditingService';
+import { getEditingService, setEditingActions } from '../../services/EditingService';
+import { documentLibraryState, navLinkGroupsSelector, uxState } from '../../state';
+import { fetchDocumentLibrary } from '../../services';
+import { AppDocument, Dictionary, DocumentStatus, Section } from '../../models';
 
-export const DocumentLibrary = ({
-	isVisible,
-	navLinkGroups,
-	search,
-	onDocumentClick,
-	selectedDocumentId,
-	isLoading,
-}: DocumentLibraryProps) => {
+export const DocumentLibrary = () => {
+	const [documentLibrary, setDocumentLibrary] = useRecoilState(documentLibraryState);
+	const navLinkGroups = useRecoilValue(navLinkGroupsSelector);
+	const [{ isDocumentLibraryVisible }] = useRecoilState(uxState);
 	const [isAddDocumentDialogVisible, showAddDocumentDialog, hideAddDocumentDialog] = useBoolean(false);
+	const classNames = useDocumentLibraryClassNames();
+
+	setEditingActions({
+		updateDocumentStatus: (documentId: string, status: DocumentStatus) => {
+			setDocumentLibrary({
+				...documentLibrary,
+				selectedDocumentId: documentId,
+				documentStatusesById: {
+					...documentLibrary.documentStatusesById,
+					[documentId]: status,
+				},
+			});
+		},
+	});
+
+	React.useEffect(() => {
+		const fetchAsync = async () => {
+			const documentLibraryResults = await fetchDocumentLibrary();
+
+			const sectionsById: Dictionary<Section> = {};
+			const documentsById: Dictionary<AppDocument> = {};
+
+			// eslint-disable-next-line no-restricted-syntax
+			for (const directory of documentLibraryResults.directories) {
+				const files = documentLibraryResults.filesByDirectoryId[directory.id];
+
+				sectionsById[directory.id] = {
+					name: directory.name,
+					documentIds: files.map((x) => x.id),
+				};
+
+				// eslint-disable-next-line no-restricted-syntax
+				for (const file of files) {
+					documentsById[file.id] = {
+						sectionId: directory.id,
+						name: file.name,
+					};
+				}
+			}
+
+			setDocumentLibrary({
+				...documentLibrary,
+				sectionsById: {
+					...documentLibrary.sectionsById,
+					...sectionsById,
+				},
+				documentsById: {
+					...documentLibrary.documentsById,
+					...documentsById,
+				},
+			});
+		};
+
+		fetchAsync();
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const commandBarItems: ICommandBarItemProps[] = [
 		{
@@ -33,26 +89,30 @@ export const DocumentLibrary = ({
 
 	const onSearchBoxChange = React.useCallback(
 		(_?: React.ChangeEvent<HTMLInputElement>, newValue?: string) => {
-			search(newValue);
+			setDocumentLibrary({
+				...documentLibrary,
+				searchKey: newValue,
+			});
 		},
-		[search],
+		[setDocumentLibrary, documentLibrary],
 	);
 
 	const onLinkClick = React.useCallback(
 		(_?: React.MouseEvent<HTMLElement, MouseEvent>, item?: INavLink) => {
 			if (item?.key) {
-				onDocumentClick(item.key);
+				setDocumentLibrary({
+					...documentLibrary,
+					selectedDocumentId: item.key,
+				});
 				if (item.key) {
 					getEditingService(item.key).show();
 				}
 			}
 		},
-		[onDocumentClick],
+		[setDocumentLibrary, documentLibrary],
 	);
 
-	const classNames = useDocumentLibraryClassNames();
-
-	if (!isVisible) {
+	if (!isDocumentLibraryVisible) {
 		return null;
 	}
 
@@ -64,7 +124,8 @@ export const DocumentLibrary = ({
 		return <NavigationMenuLink linkProps={props} />;
 	};
 
-	const isSpinnerVisible = isLoading && (navLinkGroups.length === 0 || navLinkGroups[0].links.length === 0);
+	const isSpinnerVisible =
+		documentLibrary.isLoadingDocumentLibrary && (navLinkGroups.length === 0 || navLinkGroups[0].links.length === 0);
 
 	return (
 		<>
@@ -88,7 +149,7 @@ export const DocumentLibrary = ({
 						/>
 						<Nav
 							onRenderLink={onRenderLink}
-							selectedKey={selectedDocumentId || ''}
+							selectedKey={documentLibrary.selectedDocumentId || ''}
 							styles={navStyles}
 							groups={navLinkGroups}
 							onLinkClick={onLinkClick}

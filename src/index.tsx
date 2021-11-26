@@ -3,16 +3,15 @@ import 'reflect-metadata';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Provider } from 'react-redux';
 import { initializeIcons } from '@fluentui/react';
 import { container } from 'tsyringe';
+import { RecoilRoot, useRecoilSnapshot } from 'recoil';
+
 import './index.css';
 
 import { App } from './components/App';
 import reportWebVitals from './reportWebVitals';
-import { initStore, actions } from './store';
-import { OneDriveFileSystemService, setEditingContext } from './services';
-import { DocumentStatus } from './models';
+import { OneDriveFileSystemService } from './services';
 
 initializeIcons();
 
@@ -20,22 +19,24 @@ container.register('IFileSystemService', {
 	useClass: OneDriveFileSystemService,
 });
 
-const store = initStore();
+function DebugObserver() {
+	const snapshot = useRecoilSnapshot();
+	React.useEffect(() => {
+		console.debug('The following atoms were modified:');
+		// eslint-disable-next-line no-restricted-syntax
+		for (const node of snapshot.getNodes_UNSTABLE({ isModified: true })) {
+			console.debug(node.key, snapshot.getLoadable(node));
+		}
+	}, [snapshot]);
 
-setEditingContext({
-	editingServices: {},
-	actions: {
-		updateDocumentStatus: (documentId: string, status: DocumentStatus) =>
-			store.dispatch(actions.documentLibrary.updateDocumentStatus({ documentId, status })),
-	},
-});
+	return null;
+}
 
 ReactDOM.render(
-	<React.StrictMode>
-		<Provider store={store}>
-			<App />
-		</Provider>
-	</React.StrictMode>,
+	<RecoilRoot>
+		<DebugObserver />
+		<App />
+	</RecoilRoot>,
 	document.getElementById('root'),
 );
 

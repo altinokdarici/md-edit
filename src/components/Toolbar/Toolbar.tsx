@@ -1,11 +1,21 @@
 import React from 'react';
 import { CommandBar } from '@fluentui/react';
+import { useRecoilState } from 'recoil';
 
 import { items } from './items';
-import { ToolbarProps } from './Toolbar.Props';
 import { localization } from '../../localization';
+import { uxState } from '../../state';
 
-export const Toolbar = ({ toggleViewer, isViewerVisible }: ToolbarProps) => {
+export const Toolbar = () => {
+	const [ux, setUx] = useRecoilState(uxState);
+
+	const onPreviewClick = React.useCallback(() => {
+		setUx({
+			...ux,
+			isViewerVisible: !ux.isViewerVisible,
+		});
+	}, [ux, setUx]);
+
 	return (
 		<CommandBar
 			items={items}
@@ -20,8 +30,8 @@ export const Toolbar = ({ toggleViewer, isViewerVisible }: ToolbarProps) => {
 				{
 					text: localization.preview,
 					key: 'Preview',
-					onClick: () => toggleViewer(),
-					checked: isViewerVisible,
+					onClick: onPreviewClick,
+					checked: ux.isViewerVisible,
 					iconProps: {
 						iconName: 'Preview',
 					},

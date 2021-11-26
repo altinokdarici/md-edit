@@ -2,7 +2,7 @@ import { DocumentStatus } from '../../models';
 import { EditingService } from './EditingService';
 
 export interface EditingContextActions {
-	updateDocumentStatus: (documentId: string, status: DocumentStatus) => void;
+	updateDocumentStatus?: (documentId: string, status: DocumentStatus) => void;
 }
 export interface EditingContext {
 	editingServices: {
@@ -11,10 +11,18 @@ export interface EditingContext {
 	actions: EditingContextActions;
 }
 
-let editingContext: EditingContext | undefined;
+let editingContext: EditingContext = {
+	editingServices: {},
+	actions: {},
+};
 
-export const setEditingContext = (context: EditingContext) => {
-	editingContext = context;
+export const setEditingActions = (actions: EditingContextActions) => {
+	editingContext = {
+		...editingContext,
+		actions: {
+			...actions,
+		},
+	};
 };
 
 export const getEditingContext = () => editingContext;

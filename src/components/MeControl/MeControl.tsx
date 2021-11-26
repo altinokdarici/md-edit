@@ -1,13 +1,11 @@
 import { ContextualMenu, DefaultButton, IContextualMenuProps } from '@fluentui/react';
 import * as React from 'react';
+import { useRecoilValue } from 'recoil';
 
 import { localization } from '../../localization';
 import { logout } from '../../services';
+import { authStateInitials } from '../../state';
 import { useMeControlClassNames } from './MeControl.Styles';
-
-export interface MeControlProps {
-	initials: string;
-}
 
 const menuProps: IContextualMenuProps = {
 	items: [
@@ -19,7 +17,9 @@ const menuProps: IContextualMenuProps = {
 	],
 };
 
-export const MeControl = ({ initials }: MeControlProps) => {
+export const MeControl = () => {
+	const initials = useRecoilValue(authStateInitials);
+
 	const [showContextualMenu, setShowContextualMenu] = React.useState(false);
 
 	const onShowContextualMenu = () => setShowContextualMenu(!showContextualMenu);

@@ -1,6 +1,6 @@
 import { container } from 'tsyringe';
 
-import { AppDocument, Section, WithId } from '../../models';
+import { AppDocument, Dictionary, Section, WithId } from '../../models';
 import { IDirectory, IFile, IFileSystemService, isDirectory } from '../FileSystemService';
 
 const getFileSystemService = () => container.resolve<IFileSystemService>('IFileSystemService');
@@ -24,7 +24,6 @@ export const getSections = async (): Promise<WithId<Section>[]> => {
 const convertFileToDocument = (sectionId: string) => (file: IFile): WithId<AppDocument> => {
 	return {
 		id: file.id,
-		fileName: file.name,
 		name: file.name.replace('.md', ''),
 		sectionId,
 	};
@@ -66,8 +65,29 @@ export const createDocumentInLibrary = async (
 	const file = await getFileSystemService().setFileContent(sectionId, fileName, content);
 
 	return {
-		fileName: file.name,
 		id: file.id,
 		name: file.name.replace('.md', ''),
 	};
+};
+
+interface FetchDocumentLibraryResult {
+	directories: IDirectory[];
+	filesByDirectoryId: Dictionary<IFile[]>;
+}
+
+export const fetchDocumentLibrary = async (): Promise<FetchDocumentLibraryResult> => {
+	const fileSystemService = getFileSystemService();
+	const directories = await fileSystemService.getDirectories();
+
+	const result: FetchDocumentLibraryResult = {
+		directories,
+		filesByDirectoryId: {},
+	};
+
+	// eslint-disable-next-line no-restricted-syntax
+	for await (const directory of directories) {
+		result.filesByDirectoryId[directory.id] = await fileSystemService.getFiles(directory.id);
+	}
+
+	return result;
 };

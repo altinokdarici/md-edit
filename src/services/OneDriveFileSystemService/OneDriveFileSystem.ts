@@ -43,23 +43,18 @@ export class OneDriveFileSystemService implements IFileSystemService {
 		});
 	}
 
-	public async getDirectories(path?: string): Promise<(IFile | IDirectory)[]> {
+	public async getDirectories(path?: string): Promise<IDirectory[]> {
 		const url = withChildren(getAbsolutePath(path));
 		const response: ResponseValue<OneDriveFile | OneDriveFolder> = await msGraphClient.api(url).get();
-		return response.value.map((item) => {
-			if (isOneDriveFile(item)) {
-				return <IFile>{
-					type: 'File',
+		return response.value
+			.filter((item) => !isOneDriveFile(item))
+			.map((item) => {
+				return <IDirectory>{
+					type: 'Directory',
 					name: item.name,
 					id: item.id,
 				};
-			}
-			return <IDirectory>{
-				type: 'Directory',
-				name: item.name,
-				id: item.id,
-			};
-		});
+			});
 	}
 
 	public async createDirectory(name: string, parentPath?: string): Promise<IDirectory> {
@@ -92,11 +87,11 @@ export class OneDriveFileSystemService implements IFileSystemService {
 	}
 
 	public setFileContent(parentId: string, fileName: string, content: string): Promise<IFile> {
-		return msGraphClient.api(`/me/drive/items/${parentId}:/${fileName}:/content`).put(content);
+		return msGraphClient.api(`/me/drive/items/${parentId}:/${fileName}.md:/content`).put(content);
 	}
 
 	public setFileContentByFileId(fileId: string, content: string): Promise<IFile> {
-		return msGraphClient.api(`/me/drive/items/${fileId}:/content`).put(content);
+		return msGraphClient.api(`/me/drive/items/${fileId}/content`).put(content);
 	}
 
 	public deleteFile(id: string): Promise<void> {

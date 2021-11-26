@@ -1,23 +1,20 @@
 import React from 'react';
 import { ActionButton, INavLink } from '@fluentui/react';
+import { useRecoilState } from 'recoil';
 
 import { localization } from '../../localization';
 import { ConfirmationDialog } from '../ConfirmationDialog';
 import { useBoolean } from '../../hooks';
 import { RenameDialog } from '../RenameDialog';
+import { deleteDocumentLibraryItem, renameDocumentLibraryItem } from '../../services';
+import { documentLibraryState } from '../../state';
 
-export interface NavigationMenuLinkDispatchProps {
-	onDelete: (itemId: string) => void;
-	onEdit: (itemId: string, newName: string) => void;
-}
-
-export interface NavigationMenuLinkOwnProps {
+export interface NavigationMenuLinkProps {
 	linkProps: INavLink;
 }
 
-export type NavigationMenuLinkProps = NavigationMenuLinkOwnProps & NavigationMenuLinkDispatchProps;
-
-export const NavigationMenuLink = ({ linkProps, onEdit, onDelete }: NavigationMenuLinkProps) => {
+export const NavigationMenuLink = ({ linkProps }: NavigationMenuLinkProps) => {
+	const [documentLibrary, setDocumentLibrary] = useRecoilState(documentLibraryState);
 	const [isDeleteDialogVisible, showDeleteDialog, hideDeleteDialog] = useBoolean(false);
 	const [isRenameDialogVisible, showRenameDialog, hideRenameDialog] = useBoolean(false);
 
@@ -46,8 +43,35 @@ export const NavigationMenuLink = ({ linkProps, onEdit, onDelete }: NavigationMe
 					yesButtonText={localization.yesDelete}
 					onNoClicked={hideDeleteDialog}
 					onYesClicked={() => {
-						if (linkProps.key) {
-							onDelete(linkProps.key);
+						const itemId = linkProps.key;
+						if (itemId) {
+							deleteDocumentLibraryItem(itemId).then(() => {
+								const documents = { ...documentLibrary.documentsById };
+								delete documents[itemId];
+
+								const { sectionId } = documentLibrary.documentsById[itemId];
+								const documentIds = documentLibrary.sectionsById[sectionId].documentIds.filter(
+									(x) => x !== itemId,
+								);
+
+								setDocumentLibrary({
+									...documentLibrary,
+									selectedDocumentId:
+										documentLibrary.selectedDocumentId === itemId
+											? undefined
+											: documentLibrary.selectedDocumentId,
+									documentsById: {
+										...documents,
+									},
+									sectionsById: {
+										...documentLibrary.sectionsById,
+										[sectionId]: {
+											...documentLibrary.sectionsById[sectionId],
+											documentIds,
+										},
+									},
+								});
+							});
 						}
 						hideDeleteDialog();
 					}}
@@ -55,11 +79,24 @@ export const NavigationMenuLink = ({ linkProps, onEdit, onDelete }: NavigationMe
 			)}
 			{isRenameDialogVisible && (
 				<RenameDialog
-					initialValue={linkProps.value}
+					initialValue={linkProps.name}
 					onCancel={hideRenameDialog}
 					onSave={(value) => {
-						if (linkProps.key) {
-							onEdit(linkProps.key, value);
+						const newName = value;
+						const itemId = linkProps.key;
+						if (itemId) {
+							renameDocumentLibraryItem(itemId, newName).then(() => {
+								setDocumentLibrary({
+									...documentLibrary,
+									documentsById: {
+										...documentLibrary.documentsById,
+										[itemId]: {
+											...documentLibrary.documentsById[itemId],
+											name: newName,
+										},
+									},
+								});
+							});
 						}
 						hideRenameDialog();
 					}}

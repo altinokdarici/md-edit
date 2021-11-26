@@ -20,7 +20,7 @@ export function isDirectory(item: { type: string }): item is IDirectory {
 }
 
 export interface IFileSystemService {
-	getDirectories: (path?: string) => Promise<(IDirectory | IFile)[]>;
+	getDirectories: (path?: string) => Promise<IDirectory[]>;
 	createDirectory: (name: string, parentPath?: string) => Promise<IDirectory>;
 	deleteDirectory: (id?: string) => Promise<void>;
 
